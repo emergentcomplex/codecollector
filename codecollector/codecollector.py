@@ -38,30 +38,8 @@ def is_import_line(line, file_extension):
         return bool(pattern.match(line))
     return False
 
-def get_tree_lines(start_dir, exclude_dirs, prefix=""):
-    """Generate an ASCII tree representation of the directory structure, excluding specified directories."""
-    start_path = Path(start_dir).resolve()
-    if not start_path.is_dir():
-        return [f"{start_path} is not a directory."]
-    
-    tree = []
-    entries = sorted([e for e in start_path.iterdir() if e.name not in exclude_dirs], key=lambda e: (not e.is_dir(), e.name.lower()))
-    entries_count = len(entries)
-    for index, entry in enumerate(entries):
-        connector = "└── " if index == entries_count - 1 else "├── "
-        tree.append(f"{prefix}{connector}{entry.name}")
-        if entry.is_dir():
-            extension = "    " if index == entries_count - 1 else "│   "
-            tree.extend(get_tree_lines(entry, exclude_dirs, prefix + extension))
-    return tree
-
-def write_output(collected_files, output_file, start_dir, exclude_dirs):
+def write_output(collected_files, output_file):
     with open(output_file, 'w', encoding='utf-8') as outfile:
-        # 1. Write the folder structure
-        tree_lines = get_tree_lines(start_dir, exclude_dirs)
-        outfile.write("Folder Structure (ASCII Tree):\n")
-        outfile.write("\n".join(tree_lines))
-        
         if collected_files:
             # 2. Write the consolidated files
             outfile.write("\n\nConsolidated Code Files (Import statements excluded):\n")
@@ -125,14 +103,12 @@ def main():
     exclude_dirs = set(args.exclude)
     collected_files = collect_files(args.start_dir, extensions, exclude_dirs)
     
-    write_output(collected_files, args.output, args.start_dir, exclude_dirs)
+    write_output(collected_files, args.output)
     
     if collected_files:
         print(f"Consolidated {len(collected_files)} files into '{args.output}', excluding import statements.")
     else:
         print("No files found with the specified extensions.")
     
-    print("A folder structure (ASCII tree) is included at the top of the output file.")
-
 if __name__ == "__main__":
     main()
